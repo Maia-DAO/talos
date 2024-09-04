@@ -25,13 +25,7 @@ library DeployVanilla {
         bytes32 _salt
     ) external returns (TalosBaseStrategy) {
         bytes32 salt = keccak256(abi.encodePacked(pool, optimizer, strategyManager, owner, _salt));
-        return new TalosStrategyVanilla{salt: salt}(
-                pool,
-                optimizer,
-                nonfungiblePositionManager,
-                strategyManager,
-                owner
-            );
+        return new TalosStrategyVanilla{salt: salt}(pool, optimizer, nonfungiblePositionManager, strategyManager, owner);
     }
 }
 
