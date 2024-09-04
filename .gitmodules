@@ -10,3 +10,6 @@
 [submodule "lib/solady"]
 	path = lib/solady
 	url = https://github.com/vectorized/solady
+[submodule "lib/hermes-v2"]
+	path = lib/hermes-v2
+	url = https://github.com/Maia-DAO/hermes-v2

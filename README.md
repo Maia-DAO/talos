@@ -1,4 +1,4 @@
-# Foundry Template
+# TALOS
 
 <!--
 Badges provide a quick visual way to convey various information about your project. Below are several common types of badges. Feel free to uncomment, remove, or add new badges as needed for your project. Make sure to update the links so they point to the correct sources relevant to your project.
@@ -27,7 +27,7 @@ Remember to replace 'Maia-DAO/foundry-template' with your repository's path and 
 <!-- [![Discussions][discussions-badge]][discussions-link] -->
 <!-- [![JS Library][js-library-badge]][js-library-link] -->
 
-Add a short description of the repository here.
+Transparent Automated Liquidity Omnichain Strategies (TALOS) is a peer-to-peer system that was built to reduce the current huge barrier of entry for adoption of concentrated liquidity and elevate the current user experience, specifically for Uniswap V3.
 
 ## Contributing
 
@@ -39,7 +39,16 @@ A more detailed description of the project can be found in the [documentation](h
 
 ## Architecture
 
-Add a short description of the architecture here.
+Talos positions are split into two main *Types*:
+
+- **Vanilla**: Represent a share of one or more UNI V3 NFT positions.
+- **Staked**: Represent a share of one or more UNI V3 NFT positions that are all staked in our Uniswap V3 Staker.
+
+*Strategy Templates* encompass rebalancing and reranging strategies that work with both *Types* of positions without requiring any modifications.
+
+New *Strategy Templates* can easily be created by solidity developers. There are multiple audited examples with guides of some possible operations.
+
+The first *Strategy Template* holds a single UNI V3 NFT that anyone can create for any pool. When the price deviates a predefined number of ticks from the center of the position, anyone can call rebalance for the pool to set it at 50/50 again. There is an associated fee to these tasks – if the cost of constantly balancing the position is too large, it either won't happen or the pool or gas depositors may incur losses.
 
 ## Repository Structure
 
@@ -49,23 +58,71 @@ Note that helper contracts used by tests are held in the `./test/utils` subfolde
 
 ```ml
 src
-└── Counter - "Contract desciption"
+├── base
+│   └── TalosBaseStrategy.sol
+├── boost-aggregator
+│   └── BoostAggregator.sol
+├── factories
+│   ├── BoostAggregatorFactory.sol
+│   ├── OptimizerFactory.sol
+│   ├── TalosBaseStrategyFactory.sol
+│   ├── TalosManagerFactory.sol
+│   ├── TalosStrategyStakedFactory.sol
+│   └── TalosStrategyVanillaFactory.sol
+├── interfaces
+│   ├── AutomationCompatibleInterface.sol
+│   ├── IBoostAggregatorFactory.sol
+│   ├── IBoostAggregator.sol
+│   ├── IOptimizerFactory.sol
+│   ├── ITalosBaseStrategyFactory.sol
+│   ├── ITalosBaseStrategy.sol
+│   ├── ITalosManagerFactory.sol
+│   ├── ITalosManager.sol
+│   ├── ITalosOptimizer.sol
+│   ├── ITalosStrategyStakedFactory.sol
+│   ├── ITalosStrategyStaked.sol
+│   └── ITalosStrategyVanillaFactory.sol
+├── libraries
+│   ├── PoolActions.sol
+│   └── PoolVariables.sol
+├── strategies
+│   └── TalosStrategySimple.sol
+├── TalosManager.sol
+├── TalosOptimizer.sol
+├── TalosStrategyStaked.sol
+└── TalosStrategyVanilla.sol
 test
-└── Counter.t.sol
+├── BoostAggregatorTest.t.sol
+├── factories
+│   ├── BoostAggregatorFactoryTest.t.sol
+│   ├── ComputeBoostAggregator.t.sol
+│   └── OptimizerFactoryTest.t.sol
+├── mocks
+│   ├── MockBoostAggregatorFactory.sol
+│   └── MockOptimizerFactory.sol
+├── TalosOptimizerTest.t.sol
+├── TalosStrategyStakedTest.t.sol
+├── TalosStrategyVanillaTest.t.sol
+├── TalosTestor.t.sol
+└── utils
+    ├── libraries
+    │   ├── PoolActions.sol
+    │   └── PoolVariables.sol
+    └── UniswapV3Assistant.t.sol
 ```
 
-## Local deployment and Usage
+## Local deployment and testing
 
-To utilize the contracts and deploy to a local testnet, you can install the code in your repo with forge:
+To utilize the contracts in you can install the code in your repo with forge:
 
-```markdown
-forge install https://github.com/Maia-DAO/foundry-template
+```bash
+forge install https://github.com/Maia-DAO/talos
 ```
 
-To integrate with the contracts, the interfaces are available to use:
+To run tests, first clone the repository, then setup .env following the .env.example file. After that, run the following command to install dependencies, compile and run tests:
 
-```solidity
-
+```bash
+forge test
 ```
 
 ## License
