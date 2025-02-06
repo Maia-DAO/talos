@@ -15,7 +15,7 @@ contract TalosManager is Ownable, AutomationCompatibleInterface, ITalosManager {
     using PoolVariables for IUniswapV3Pool;
 
     /*///////////////////////////////////////////////////////////////
-                        TALOS OPTIMIZER STATE
+                          TALOS OPTIMIZER STATE
     ///////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc ITalosManager
@@ -32,6 +32,8 @@ contract TalosManager is Ownable, AutomationCompatibleInterface, ITalosManager {
 
     /// @inheritdoc ITalosManager
     ITalosBaseStrategy public override strategy;
+
+    IUniswapV3Pool public override pool;
 
     /**
      * @notice Construct a new Talos Strategy Manager contract.
@@ -59,44 +61,43 @@ contract TalosManager is Ownable, AutomationCompatibleInterface, ITalosManager {
         if (address(strategy) == address(0)) revert AddressZero();
         renounceOwnership();
         strategy = _strategy;
+        pool = _strategy.pool();
 
         emit StrategySet(_strategy);
     }
 
     /*///////////////////////////////////////////////////////////////
-                        UPKEEP ACTION CHECKERS
+                          UPKEEP ACTION CHECKERS
     ///////////////////////////////////////////////////////////////*/
+
+    function _getTicks() private view returns (int24 currentTick, int24 tickLower, int24 tickUpper) {
+        (, currentTick,,,,,) = pool.slot0();
+        tickLower = strategy.tickLower();
+        tickUpper = strategy.tickUpper();
+    }
 
     /**
      * @notice Returns true if strategy needs to be rebalanced
      * @dev Checks if current tick is in range, returns true if not
      */
-    function getRebalance(ITalosBaseStrategy position) private view returns (bool) {
-        // Calculate base ticks.
-        (, int24 currentTick,,,,,) = position.pool().slot0();
-
-        return currentTick - position.tickLower() >= ticksFromLowerRebalance
-            || position.tickUpper() - currentTick >= ticksFromUpperRebalance;
+    function getRebalance(int24 currentTick, int24 tickLower, int24 tickUpper) private view returns (bool) {
+        return currentTick - tickLower <= ticksFromLowerRebalance || tickUpper - currentTick <= ticksFromUpperRebalance;
     }
 
     /**
      * @notice Returns true if strategy needs to be reranged
      * @dev Checks if current tick is in range, returns true if not
      */
-    function getRerange(ITalosBaseStrategy position) private view returns (bool) {
-        // Calculate base ticks.
-        (, int24 currentTick,,,,,) = position.pool().slot0();
-
-        return currentTick - position.tickLower() >= ticksFromLowerRerange
-            || position.tickUpper() - currentTick >= ticksFromUpperRerange;
+    function getRerange(int24 currentTick, int24 tickLower, int24 tickUpper) private view returns (bool) {
+        return currentTick - tickLower <= ticksFromLowerRerange || tickUpper - currentTick <= ticksFromUpperRerange;
     }
 
     /*///////////////////////////////////////////////////////////////
-                            AUTOMATION
+                                AUTOMATION
     ///////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc AutomationCompatibleInterface
-    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
+    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory) {
         // checks if price has not moved a lot recently.
         // This mitigates price manipulation during rebalance and also prevents placing orders when it's too volatile.
         try this.checkDeviation() {}
@@ -104,26 +105,28 @@ contract TalosManager is Ownable, AutomationCompatibleInterface, ITalosManager {
             return (false, "");
         }
 
-        if (getRebalance(strategy)) {
+        (int24 currentTick, int24 tickLower, int24 tickUpper) = _getTicks();
+
+        if (getRebalance(currentTick, tickLower, tickUpper)) {
             upkeepNeeded = true;
-        } else if (getRerange(strategy)) {
+        } else if (getRerange(currentTick, tickLower, tickUpper)) {
             upkeepNeeded = true;
         }
-
-        performData = "";
     }
 
     /// @inheritdoc AutomationCompatibleInterface
     /// @notice Rebalances or Reranges an Optimizer's positions.
     function performUpkeep(bytes calldata) external override {
-        if (getRebalance(strategy)) {
+        (int24 currentTick, int24 tickLower, int24 tickUpper) = _getTicks();
+
+        if (getRebalance(currentTick, tickLower, tickUpper)) {
             /**
              * @dev Swaps imbalanced token. Finds base position and limit position for imbalanced token if
              * we don't have balance during swap because of price impact.
              * mints all amounts to this position (excluding earned fees)
              */
             strategy.rebalance();
-        } else if (getRerange(strategy)) {
+        } else if (getRerange(currentTick, tickLower, tickUpper)) {
             /**
              * @dev Finds base position and limit position for imbalanced token
              * mints all amounts to this position (excluding earned fees)
@@ -139,6 +142,6 @@ contract TalosManager is Ownable, AutomationCompatibleInterface, ITalosManager {
     function checkDeviation() external view {
         ITalosOptimizer optimizer = strategy.optimizer();
 
-        strategy.pool().checkDeviation(optimizer.maxTwapDeviation(), optimizer.twapDuration());
+        PoolVariables.checkDeviation(pool, optimizer.maxTwapDeviation(), optimizer.twapDuration());
     }
 }
