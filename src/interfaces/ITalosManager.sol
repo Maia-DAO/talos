@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+
 import {ITalosBaseStrategy} from "./ITalosBaseStrategy.sol";
 
 import {AutomationCompatibleInterface} from "./AutomationCompatibleInterface.sol";
@@ -32,6 +34,9 @@ interface ITalosManager is AutomationCompatibleInterface {
 
     /// @notice TALOS strategy to rebalance or rerange
     function strategy() external view returns (ITalosBaseStrategy);
+
+    /// @notice TALOS strategy's pool
+    function pool() external view returns (IUniswapV3Pool);
 
     /*//////////////////////////////////////////////////////////////
                                 EVENTS

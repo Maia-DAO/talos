@@ -33,6 +33,7 @@ contract TalosManager is Ownable, AutomationCompatibleInterface, ITalosManager {
     /// @inheritdoc ITalosManager
     ITalosBaseStrategy public override strategy;
 
+    /// @inheritdoc ITalosManager
     IUniswapV3Pool public override pool;
 
     /**
