@@ -59,7 +59,7 @@ contract TalosManager is Ownable, AutomationCompatibleInterface, ITalosManager {
     }
 
     function setStrategy(ITalosBaseStrategy _strategy) external onlyOwner {
-        if (address(strategy) == address(0)) revert AddressZero();
+        if (address(_strategy) == address(0)) revert AddressZero();
         renounceOwnership();
         strategy = _strategy;
         pool = _strategy.pool();
